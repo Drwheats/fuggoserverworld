@@ -55,7 +55,6 @@ app.post('/api/images', upload.single('file'), function (req, res) {
   res.json({})
 })
 
-
 // request the main page of topics from the server
 app.post("/postNumber/", (req, res) => {
   // let onPage = req.body.postPage;
@@ -67,7 +66,6 @@ app.post("/postNumber/", (req, res) => {
 
 // request a page of posts, including replies, from the server
 app.post('/pageInfo', function (req, res) {
-  // const highScores = require(pathToJSON);
   let checkPost = req.body;
   checkPost = checkPost.pageLoc;
   checkPost = Number(checkPost);
@@ -202,15 +200,17 @@ app.post('/delete', function (req, res) {
   // });
 
 
-https
-    .createServer(
-        {
-          key: fs.readFileSync("server.key"),
-          cert: fs.readFileSync("server.cert"),
-        },
-        app
-    )
-    .listen(4000, function () {
-      console.log(
+// https
+//     .createServer(
+//         {
+// /*
+//           key: fs.readFileSync("server.key"),
+//           cert: fs.readFileSync("server.cert"),
+// */
+//         },
+//         app
+//     )
+    app.listen(4000, function () {
+      console.log('welcome to fuggos fun post time'
       );
     });
