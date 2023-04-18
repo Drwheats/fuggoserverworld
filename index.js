@@ -4,24 +4,100 @@ const fileUpload = require('express-fileupload');
 const bodyParser = require("body-parser");
 const fs = require("fs");
 const https = require('https');
-
 const pathToJSON = './highscores.json'
 const highScores = require(pathToJSON);
-
 // const PORT = process.env.PORT || 4000;
 const app = express();
 const pathToLastPostNumber = './postNumber.txt'
 
-// this is all HTTPS below:
+// this is all EXCEL parsing below:
+
+const reader = require('xlsx')
+const file = reader.readFile('./mosmonmosh.xlsx')
+const sheets = file.Sheets;
+let sheetnames = file.SheetNames.slice(10, 24);
+let pokedex = sheets["Pokédex"];
+let dexrange = reader.utils.decode_range(pokedex['!ref']); // get the range
+
+
+app.use(cors({ credentials: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// Helper function that enters string (column D on the sheet) and looks up the mon.
+function infoLookUp(mon){
+  console.log(mon)
+  for (let rowNum = dexrange.s.r; rowNum <= dexrange.e.r; rowNum++) {
+    const look = pokedex[reader.utils.encode_cell({r: rowNum, c: 8})];
+    if (look.v === mon) {
+      console.log('We found a ' + mon)
+      let name = pokedex[reader.utils.encode_cell({r: rowNum, c: 8})].v
+      let pts = pokedex[reader.utils.encode_cell({r: rowNum, c: 5})].v
+      let type1 = pokedex[reader.utils.encode_cell({r: rowNum, c: 9})].v
+      let type2 = null;
+      try {
+        let type2 = pokedex[reader.utils.encode_cell({r: rowNum, c: 10})].v
+      }
+      catch (e) {
+        console.log(e)}
+      let hp = pokedex[reader.utils.encode_cell({r: rowNum, c: 11})].v
+      let atk = pokedex[reader.utils.encode_cell({r: rowNum, c: 11})].v
+      let def = pokedex[reader.utils.encode_cell({r: rowNum, c: 12})].v
+      let spa = pokedex[reader.utils.encode_cell({r: rowNum, c: 13})].v
+      let spd = pokedex[reader.utils.encode_cell({r: rowNum, c: 14})].v
+      let spe = pokedex[reader.utils.encode_cell({r: rowNum, c: 15})].v
+      let ability1 = pokedex[reader.utils.encode_cell({r: rowNum, c: 17})].v
+      let ability2 = null;
+      let ability3 = null;
+      try {
+        ability2 = pokedex[reader.utils.encode_cell({r: rowNum, c: 18})].v
+      }
+      catch (e){
+        console.log(e)}
+      try {
+        ability3 = pokedex[reader.utils.encode_cell({r: rowNum, c: 19})].v
+      }
+      catch (e){
+        console.log(e)}
+      let returnedMon = {name: name, pts: pts, type1: type1, type2: type2, hp: hp, atk: atk, def: def,spa: spa, spd: spd, spe: spe, ability1: ability1, ability2: ability2, ability3: ability3 }
+      return returnedMon;
+    }
+  }
+
+  return 0;
+}
+
+app.post("/coaches", (req, res) => {
+  let coachList = [];
+  for (let i = 0; i < sheetnames.length; i++) {
+    let tempSheet = sheets[sheetnames[i]]
+    let coach_name = tempSheet["B12"]["v"];
+    let team_name = tempSheet["B2"]["v"];
+    let win_loss = tempSheet["F14"]["v"]
+    let mons= reader.utils.sheet_to_json(tempSheet,{range: "M3:M11", blankrows: false });
+    let realMons = []
+    for (let j = 0; j < mons.length; j++) {
+      let tempKey = mons[j].Pokémon;
+      let tempMon= infoLookUp(tempKey);
+      console.log(tempMon)
+      realMons[j] = tempMon;
+    }
+    let json_body = {coachNum : i, coachName : coach_name, teamName: team_name, winLoss: win_loss, mons: realMons }
+    coachList[i] = json_body;
+  }
+  console.log(coachList[2].mons)
+  res.json(coachList);
+})
 
 
 
 // rate limiter.
 // const limiter = require("./middleware/rateLimiter");
 // app.use(limiter);
-app.use(cors({ credentials: true }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+
+
+// EVERYTHING below this line is for /b/.
+
 // helper functions. when i get off my ass writePost() will be here too.
 function readPost(){
   let lastPost = fs.readFileSync(pathToLastPostNumber);
@@ -37,6 +113,8 @@ function addPost(){
 let lastPostNumber = Number(readPost());
 // for images
 const multer = require('multer')
+const xlsx = require("xlsx");
+const {lookup} = require("mime-types");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
