@@ -36,16 +36,16 @@ function infoLookUp(mon){
       let type1 = pokedex[reader.utils.encode_cell({r: rowNum, c: 9})].v
       let type2 = null;
       try {
-        let type2 = pokedex[reader.utils.encode_cell({r: rowNum, c: 10})].v
+        type2 = pokedex[reader.utils.encode_cell({r: rowNum, c: 10})].v
       }
       catch (e) {
         console.log(e)}
       let hp = pokedex[reader.utils.encode_cell({r: rowNum, c: 11})].v
-      let atk = pokedex[reader.utils.encode_cell({r: rowNum, c: 11})].v
-      let def = pokedex[reader.utils.encode_cell({r: rowNum, c: 12})].v
-      let spa = pokedex[reader.utils.encode_cell({r: rowNum, c: 13})].v
-      let spd = pokedex[reader.utils.encode_cell({r: rowNum, c: 14})].v
-      let spe = pokedex[reader.utils.encode_cell({r: rowNum, c: 15})].v
+      let atk = pokedex[reader.utils.encode_cell({r: rowNum, c: 12})].v
+      let def = pokedex[reader.utils.encode_cell({r: rowNum, c: 13})].v
+      let spa = pokedex[reader.utils.encode_cell({r: rowNum, c: 14})].v
+      let spd = pokedex[reader.utils.encode_cell({r: rowNum, c: 15})].v
+      let spe = pokedex[reader.utils.encode_cell({r: rowNum, c: 16})].v
       let ability1 = pokedex[reader.utils.encode_cell({r: rowNum, c: 17})].v
       let ability2 = null;
       let ability3 = null;
@@ -60,6 +60,7 @@ function infoLookUp(mon){
       catch (e){
         console.log(e)}
       let returnedMon = {name: name, pts: pts, type1: type1, type2: type2, hp: hp, atk: atk, def: def,spa: spa, spd: spd, spe: spe, ability1: ability1, ability2: ability2, ability3: ability3 }
+      console.log(returnedMon.spd)
       return returnedMon;
     }
   }
