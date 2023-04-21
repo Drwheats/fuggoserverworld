@@ -68,7 +68,7 @@ function infoLookUp(mon){
   return 0;
 }
 
-app.post("/coaches", (req, res) => {
+app.get("/coaches", (req, res) => {
   let coachList = [];
   for (let i = 0; i < sheetnames.length; i++) {
     let tempSheet = sheets[sheetnames[i]]
@@ -278,17 +278,17 @@ app.post('/delete', function (req, res) {
   //   console.log(`Server listening on port 3001!`);
   // });
 
+// this goes in live, it does NOT go in testing.
+https
+    .createServer(
+        {
 
-// https
-//     .createServer(
-//         {
-// /*
-//           key: fs.readFileSync("server.key"),
-//           cert: fs.readFileSync("server.cert"),
-// */
-//         },
-//         app
-//     )
+          key: fs.readFileSync("server.key"),
+          cert: fs.readFileSync("server.cert"),
+
+        },
+        app
+    )
     app.listen(4000, function () {
       console.log('welcome to fuggos fun post time'
       );
