@@ -76,6 +76,7 @@ app.get("/coaches", (req, res) => {
     let team_name = tempSheet["B2"]["v"];
     let win_loss = tempSheet["F14"]["v"]
     let mons= reader.utils.sheet_to_json(tempSheet,{range: "M3:M11", blankrows: false });
+    let matchups = reader.utils.sheet_to_json(tempSheet,{range: "B17:F24", blankrows: false });
     let realMons = []
     for (let j = 0; j < mons.length; j++) {
       let tempKey = mons[j].Pokémon;
@@ -83,7 +84,7 @@ app.get("/coaches", (req, res) => {
       console.log(tempMon)
       realMons[j] = tempMon;
     }
-    let json_body = {coachNum : i, coachName : coach_name, teamName: team_name, winLoss: win_loss, mons: realMons }
+    let json_body = {coachNum : i, coachName : coach_name, teamName: team_name, winLoss: win_loss, mons: realMons, matchups: matchups }
     coachList[i] = json_body;
   }
   console.log(coachList[2].mons)
@@ -116,6 +117,7 @@ let lastPostNumber = Number(readPost());
 const multer = require('multer')
 const xlsx = require("xlsx");
 const {lookup} = require("mime-types");
+const {log} = require("debug");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -231,16 +233,24 @@ app.post('/submit', function (req, res) {
 // delete either a post or a reply. works with both.
 app.post('/delete', function (req, res) {
   let checkPost = req.body;
-      console.log(req.socket.remoteAddress + " is requesting to delete post number " + checkPost.motherPost + " which was written by the IP : " + req.ip)
 
   if (checkPost.isReply){
+    console.log(req.socket.remoteAddress + " is requesting to delete post number " + checkPost.motherPost + " which was written by the IP : " + req.ip)
+
     for (let i = 0; i < highScores.length; i++) {
       if (highScores[i].postNumber === Number(req.body.motherPost)) {
         for (let j =0; j < highScores[i].postReplies.length; j++) {
           if (highScores[i].postReplies[j].postNumber === Number(req.body.postNumber)){
             console.log(req.socket.remoteAddress + " ______ " + highScores[i].userIP)
             console.log(highScores[i].postReplies[j] + "has been deleted.");
-            highScores[i].postReplies.splice(j, 1);
+            let checkReplyIP = String(highScores[i].postReplies[j].ip);
+            let checkUserIP = String(req.ip);
+            if (checkUserIP === checkReplyIP || checkUserIP === "::ffff:199.7.157.121") {
+              highScores[i].postReplies.splice(j, 1);
+              console.log("Success! ; " + checkReplyIP + " is the same as " + checkUserIP)
+            }
+            else (console.log("error ; " + checkReplyIP + " is not the same as " + checkUserIP))
+
           }
         }
       }}
@@ -253,10 +263,21 @@ app.post('/delete', function (req, res) {
     })
   }
   else if (!checkPost.isReply) {
+
         for (let i = 0; i < highScores.length; i++) {
           if (highScores[i].postNumber === Number(req.body.postNumber)) {
             console.log("hit!")
-            highScores.splice(i, 1);
+            console.log("the post of this IP is " + highScores[i].userIP +" and the deletor is " + req.ip);
+            if (req.body.ip === highScores[i].userIP) {
+              let checkReplyIP = String(highScores[i].ip);
+              let checkUserIP = String(req.ip);
+              if (checkUserIP === checkReplyIP || checkUserIP === "::ffff:199.7.157.121") {
+                highScores[i].postReplies.splice(i, 1);
+                console.log("Success! ; " + checkReplyIP + " is the same as " + checkUserIP)
+              }
+              else (console.log("error ; " + checkReplyIP + " is not the same as " + checkUserIP))
+
+            }
           }}
 
 
@@ -279,16 +300,16 @@ app.post('/delete', function (req, res) {
   // });
 
 // this goes in live, it does NOT go in testing.
-https
-    .createServer(
-        {
-
-          key: fs.readFileSync("server.key"),
-          cert: fs.readFileSync("server.cert"),
-
-        },
-        app
-    )
+// https
+//     .createServer(
+//         {
+//
+//           key: fs.readFileSync("server.key"),
+//           cert: fs.readFileSync("server.cert"),
+//
+//         },
+//         app
+//     )
     app.listen(4000, function () {
       console.log('welcome to fuggos fun post time'
       );
